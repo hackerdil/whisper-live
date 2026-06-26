@@ -149,7 +149,47 @@ a:focus-visible {
 }
 
 .home-intro {
+  display: grid;
   max-width: 760px;
+  gap: 1.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.home-greeting {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.home-avatar {
+  display: grid;
+  width: 3.75rem;
+  height: 3.75rem;
+  flex: 0 0 3.75rem;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: #34705f;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.home-intro .eyebrow {
+  margin-bottom: 0.35rem;
+}
+
+.home-intro h1 {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+  overflow-wrap: anywhere;
+}
+
+.home-intro-copy {
+  max-width: 58ch;
+  margin: 0;
+  color: #52635d;
+  font-size: 1.05rem;
+  line-height: 1.7;
 }
 
 .home-page,
@@ -746,6 +786,16 @@ h1 {
   .page-container {
     place-items: start center;
     padding: 1.25rem;
+  }
+
+  .home-page {
+    gap: 1.5rem;
+  }
+
+  .home-avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    flex-basis: 3.25rem;
   }
 
   .shared-files-page.has-selection {
