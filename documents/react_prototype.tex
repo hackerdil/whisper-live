@@ -1,0 +1,61 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.25em}
+\setlist[itemize]{leftmargin=*, itemsep=0.5pt, topsep=0.5pt}
+
+\begin{document}
+
+\begin{center}
+    {\Large \textbf{React Prototype with Components}}\\[0.02cm]
+    {\large \textbf{Whisper Notes}}
+\end{center}
+
+\textbf{Introduction}
+
+This document provides an overview of our current design and architectural decisions, including both the parts that are already implemented and the parts that still need to be completed. The explanations are structured according to the page sections of the frontend. In addition, this document describes the features that remain consistent with the previously submitted design draft, as well as the design changes that were introduced later.
+
+
+\textbf{Conceptual Changes After the Design Draft}
+\begin{itemize}
+    \item After the design draft, we decided to make several changes to our original design concept. Instead of using the blue color tones shown in the mockups, we chose a more minimalist and simple color palette based on green tones. This decision was made to create a calmer visual appearance and to make the interface less tiring for the user’s eyes.
+    \item We also changed the navigation flow after login. In the design draft, the user was planned to be redirected directly from the login page to the transcribe page. Instead, we decided to add a separate home page. After logging in, the user is redirected to the home page. The home page provides an overview of the user’s activity, including recent transcripts, total processed audio time, saved favorites, and a quick-start section for creating a new transcript.
+\end{itemize}
+
+\textbf{Login-Home Page}
+
+
+
+\textbf{Transcribe Page}
+
+The Transcribe page is where the user creates a new note from audio. It follows the same green color palette and rounded card layout used across the rest of the application, so it stays visually consistent with the other pages. The page is split into a main workspace on the left and an engine panel on the right; on smaller screens the layout collapses into a single column.
+
+\begin{itemize}
+    \item \textbf{Audio source:} The user can provide audio in two ways, switched through a tab control. The first option is \textit{Upload file}, which offers a drag-and-drop area as well as a normal file picker and accepts common audio formats (MP3, WAV, M4A, OGG, FLAC, WEBM). The second option is \textit{Record audio}, which records directly from the microphone in the browser using the \texttt{MediaRecorder} API and shows a live timer while recording. After a file is selected or a recording is finished, a summary with the file name, file size, and an inline audio preview player is displayed, and the user can remove it again.
+    \item \textbf{Engine selection:} A dedicated panel lets the user choose where the transcription runs. There are two options, presented as selectable cards: an \textbf{Ollama (Local)} model that runs offline on the user’s own machine, and a \textbf{Cloud API} model that sends the audio to a hosted Whisper service over the internet. The configuration fields change depending on the selected engine. For Ollama, the user can set the server URL (default \texttt{http://localhost:11434}) and pick a Whisper model. For the Cloud API, the user selects a provider (OpenAI, Groq, or a custom endpoint), chooses a model, and enters an API key; for a custom provider an additional endpoint URL field is shown.
+    \item \textbf{Transcription details:} The user can set a note title, choose the language (including auto-detect, English, German, Turkish, French, and Spanish), and toggle options for including timestamps and detecting speakers (diarization).
+    \item \textbf{Starting a transcription:} The start button stays disabled until both an audio source and a valid engine configuration are provided. When started, a progress indicator is shown, and on completion a confirmation card links the user to the Results page.
+    \item \textbf{Scope:} At this stage the page is implemented purely as a frontend prototype. The transcription run is simulated on the client side, and the actual request to a backend (sending the audio together with the selected engine settings) is left as a clearly marked integration point for the planned backend.
+\end{itemize}
+
+
+\textbf{Results Page}
+
+
+\textbf{Shared Files Page}
+
+
+\textbf{Planned Backend / API}
+
+
+
+\vfill
+{\footnotesize AI tools were used to support the editing of this document, grammar improvement, and the preparation of the LaTeX code.}
+
+\end{document}
