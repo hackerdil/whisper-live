@@ -4,11 +4,18 @@ function Home({ user }) {
   return (
     <section id="main-content" className="home-page">
       <header className="home-intro">
-        <p className="eyebrow">Welcome back</p>
-        <h1>{user?.name}, your dashboard</h1>
-        <p>
-          Access transcription, results, and shared files from one place. Use the links
-          below to move between the app pages quickly.
+        <div className="home-greeting">
+          <span className="home-avatar" aria-hidden="true">
+            {user?.name?.trim().charAt(0).toUpperCase() || 'U'}
+          </span>
+          <div>
+            <p className="eyebrow">Welcome back</p>
+            <h1>Hi, {user?.name || 'there'}</h1>
+          </div>
+        </div>
+        <p className="home-intro-copy">
+          Everything you need is right here. Start a new transcription, review your
+          results, or open files shared with you.
         </p>
       </header>
 
