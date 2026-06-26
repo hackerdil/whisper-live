@@ -7,7 +7,7 @@ const navigationItems = [
   { path: '/shared', label: 'Shared Files' },
 ]
 
-function Navigation() {
+function Navigation({ user, onLogout }) {
   return (
     <header className="site-header">
       <NavLink className="brand" to="/">
@@ -28,6 +28,25 @@ function Navigation() {
               </NavLink>
             </li>
           ))}
+          {user ? (
+            <li className="navigation-user">
+              <span className="nav-user">{user.name}</span>
+              <button type="button" className="navigation-link logout-button" onClick={onLogout}>
+                Logout
+              </button>
+            </li>
+          ) : (
+            <li>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'navigation-link active' : 'navigation-link'
+                }
+                to="/login"
+              >
+                Login
+              </NavLink>
+            </li>
+          )}
         </ul>
       </nav>
     </header>
