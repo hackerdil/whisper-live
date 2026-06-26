@@ -90,6 +90,141 @@ a:focus-visible {
   padding: 2rem;
 }
 
+.login-page {
+  width: min(100%, 540px);
+}
+
+.login-form {
+  display: grid;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.login-field {
+  display: grid;
+  gap: 0.5rem;
+  color: #20302a;
+}
+
+.secondary-button {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid #dbe5e1;
+  border-radius: 999px;
+  background: transparent;
+  color: #20302a;
+  cursor: pointer;
+}
+
+.secondary-button:hover {
+  background: #eef6f1;
+}
+
+.login-field input {
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #c7d5cf;
+  border-radius: 0.95rem;
+  background: #f8fbf9;
+  color: #20302a;
+}
+
+.form-error {
+  margin: 0;
+  color: #a33;
+  font-size: 0.95rem;
+}
+
+.form-note {
+  margin: 0;
+  color: #34705f;
+  font-size: 0.95rem;
+}
+
+.home-page {
+  width: min(100%, 980px);
+  display: grid;
+  gap: 2rem;
+}
+
+.home-intro {
+  max-width: 760px;
+}
+
+.home-page,
+.summary-card,
+.link-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+}
+
+.summary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.summary-card {
+  padding: 1.5rem;
+  border: 1px solid rgba(43, 95, 79, 0.12);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 18px 40px rgb(24 63 53 / 8%);
+}
+
+.summary-label {
+  margin: 0 0 0.5rem;
+  color: #34705f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.summary-copy {
+  margin: 0.5rem 0 0;
+  color: #52635d;
+  line-height: 1.7;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.link-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.link-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1.4rem;
+  border-radius: 1.2rem;
+  text-decoration: none;
+  color: #20302a;
+  background: #f8fbf9;
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.link-card:hover {
+  border-color: #34705f;
+  transform: translateY(-2px);
+}
+
+.nav-user {
+  display: inline-block;
+  padding: 0.55rem 0.9rem;
+  color: #dcebe6;
+}
+
+.logout-button {
+  border: none;
+  background: transparent;
+  color: #dcebe6;
+}
+
 .placeholder-page {
   width: min(100%, 680px);
   padding: clamp(2rem, 6vw, 4.5rem);
