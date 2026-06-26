@@ -1,28 +1,31 @@
+import { NavLink } from 'react-router-dom'
+
 const navigationItems = [
-  { id: 'login', label: 'Login' },
-  { id: 'transcribe', label: 'Transcribe' },
-  { id: 'results', label: 'Results' },
-  { id: 'shared', label: 'Shared Files' },
+  { path: '/', label: 'Home' },
+  { path: '/transcribe', label: 'Transcribe' },
+  { path: '/results', label: 'Results' },
+  { path: '/shared', label: 'Shared Files' },
 ]
 
-function Navigation({ activePage, onNavigate }) {
+function Navigation() {
   return (
     <header className="site-header">
-      <a className="brand" href="#main-content" onClick={() => onNavigate('login')}>
+      <NavLink className="brand" to="/">
         Whisper Notes
-      </a>
+      </NavLink>
       <nav aria-label="Primary navigation">
         <ul className="navigation-list">
           {navigationItems.map((item) => (
-            <li key={item.id}>
-              <button
-                className={activePage === item.id ? 'navigation-link active' : 'navigation-link'}
-                type="button"
-                aria-current={activePage === item.id ? 'page' : undefined}
-                onClick={() => onNavigate(item.id)}
+            <li key={item.path}>
+              <NavLink
+                className={({ isActive }) =>
+                  isActive ? 'navigation-link active' : 'navigation-link'
+                }
+                end={item.path === '/'}
+                to={item.path}
               >
                 {item.label}
-              </button>
+              </NavLink>
             </li>
           ))}
         </ul>
@@ -32,4 +35,3 @@ function Navigation({ activePage, onNavigate }) {
 }
 
 export default Navigation
-
