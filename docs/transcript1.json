@@ -1,0 +1,141 @@
+{
+  "id": "1",
+  "title": "Kommunikationsnetze Vorlesung",
+  "group": "INF5",
+  "audioUrl": "docs/audio/audio1.mp3",
+  "durationSeconds": 583.31,
+  "language": "de",
+  "createdAt": "2026-06-25T12:00:00Z",
+  "createdBy": "Erdil Kunt",
+  "transcription": {
+    "status": "completed",
+    "speakers": [
+      {
+        "id": "lecturer",
+        "label": "Lecturer",
+        "voice": "Anna"
+      },
+      {
+        "id": "student_1",
+        "label": "Student 1",
+        "voice": "Yannick"
+      }
+    ],
+    "segments": [
+      {
+        "id": "seg-001",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 0.0,
+        "endTime": 157.92,
+        "text": "Willkommen zur heutigen Vorlesung über Kommunikationsnetze. Heute sprechen wir über die grundlegende Struktur von Kommunikationsnetzen. Dabei schauen wir uns an, was ein Kommunikationsnetz ist, welche Rolle das Zugangsnetz und das Kernnetz spielen und warum Begriffe wie Echtzeitübertragung, Latenz und Handover wichtig sind. Ein Kommunikationsnetz ist ein technisches System, das mehrere Geräte miteinander verbindet. Diese Geräte können zum Beispiel Smartphones, Laptops, Server, Router oder Funkstationen sein. Das Ziel eines solchen Netzes ist es, Informationen von einem Punkt zu einem anderen Punkt zu übertragen. Diese Informationen können sehr unterschiedlich sein. Es kann sich um eine Textnachricht handeln, um eine Webseite, um einen Videoanruf, um einen Musikstream oder um eine Datei. Wenn wir im Alltag das Internet benutzen, wirkt dieser Vorgang meistens sehr einfach. Wir öffnen eine Webseite, schicken eine Nachricht oder starten einen Videoanruf. Im Hintergrund passiert aber sehr viel. Die Daten werden nicht einfach als ein großes Ganzes übertragen, sondern meistens in kleine Datenpakete aufgeteilt. Diese Pakete werden durch verschiedene Netzbereiche geleitet und am Ziel wieder zusammengesetzt. Nehmen wir als Beispiel den Aufruf einer Webseite. Ein Nutzer gibt im Browser eine Adresse ein. Der Laptop oder das Smartphone schickt dann eine Anfrage an einen Server. Diese Anfrage geht zunächst über den Router des Nutzers. Danach gelangt sie in das Netz des Internetanbieters. Von dort aus wird sie über weitere Netzbereiche bis zum Zielserver weitergeleitet. Der Server antwortet anschließend mit den Daten der Webseite. Diese Daten nehmen wieder einen Weg zurück zum Nutzer. Erst dann kann die Webseite im Browser angezeigt werden. Um diesen Ablauf besser zu verstehen, unterscheidet man häufig zwischen dem Zugangsnetz und dem Kernnetz. Das Zugangsnetz ist der Teil des Netzes, der den Kunden oder das Endgerät mit dem Netz des Anbieters verbindet. Bei einem privaten Internetanschluss gehört zum Beispiel die Verbindung vom Router bis zum Internetanbieter zum Zugangsnetz. Bei einem Mobiltelefon ist das Zugangsnetz die Funkverbindung zwischen Smartphone und Mobilfunkstation. Man kann sagen: Das Zugangsnetz ist der Einstiegspunkt in das Kommunikationsnetz."
+      },
+      {
+        "id": "seg-002",
+        "speakerId": "student_1",
+        "speaker": "Student 1",
+        "startTime": 158.1,
+        "endTime": 165.52,
+        "text": "Entschuldigung, heißt das, dass der Nutzer normalerweise nicht direkt mit dem Kernnetz verbunden ist?"
+      },
+      {
+        "id": "seg-003",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 165.7,
+        "endTime": 187.88,
+        "text": "Genau. Der Nutzer ist normalerweise nicht direkt mit dem Kernnetz verbunden. Er wird über das Zugangsnetz angeschlossen. Das Kernnetz arbeitet eher im Hintergrund. Das Kernnetz ist der zentrale Teil des Netzes. Es verbindet verschiedene Zugangsnetze miteinander und transportiert große Datenmengen über längere Strecken."},
+      {
+        "id": "seg-003",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 187.90,
+        "endTime": 227.88,
+        "text": " Man kann sich das mit einem Straßensystem vorstellen. Das Zugangsnetz ist wie die kleine Straße vor dem Haus. Das Kernnetz ist eher wie eine Autobahn. Auf der kleinen Straße kommt man zunächst aus dem Wohngebiet heraus. Auf der Autobahn können dann sehr viele Fahrzeuge schnell über große Entfernungen fahren. Ähnlich ist es bei Daten in Kommunikationsnetzen. Ein weiteres wichtiges Thema ist die Reichweite von Netzen. Kommunikationsnetze können nach ihrer Größe oder Reichweite kategorisiert werden. Ein sehr kleines Netz nennt man Personal Area Network, kurz PAN. "
+      },
+      {
+        "id": "seg-003",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 227.9,
+        "endTime": 263.88,
+        "text": "Ein Beispiel dafür ist eine Bluetooth-Verbindung zwischen einem Smartphone und Kopfhörern. Die Reichweite ist sehr gering und meistens nur auf wenige Meter begrenzt. Ein Local Area Network, kurz LAN, verbindet Geräte in einem begrenzten Bereich. Das kann zum Beispiel eine Wohnung, ein Büro, ein Labor oder ein Universitätsraum sein. Ein typisches Beispiel ist ein Heimnetzwerk mit Router, Laptop, Smartphone und Drucker. Diese Geräte befinden sich alle in einem lokalen Bereich und können über das LAN miteinander kommunizieren."
+      },
+      {
+        "id": "seg-003",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 263.94,
+        "endTime": 287.88,
+        "text": " Ein Metropolitan Area Network, kurz MAN, umfasst eine größere Stadt oder Region. Es liegt also zwischen einem lokalen Netz und einem sehr großen Weitverkehrsnetz. Ein Wide Area Network, kurz WAN, verbindet schließlich große geografische Bereiche. Das bekannteste Beispiel für ein WAN ist das Internet. Es verbindet Geräte und Netze auf der ganzen Welt miteinander. "
+      },
+      {
+        "id": "seg-003",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 288.92,
+        "endTime": 317.88,
+        "text": " Neben der Reichweite ist auch die Art der Datenübertragung wichtig. Manche Anwendungen benötigen eine Echtzeitübertragung. Echtzeitübertragung bedeutet, dass Daten sofort oder mit sehr geringer Verzögerung übertragen werden müssen. Ein gutes Beispiel ist ein Telefonat.  Wenn eine Person spricht, muss die Stimme fast sofort bei der anderen Person ankommen. Wenn die Verzögerung zu groß ist, wird das Gespräch unangenehm."
+      },
+      {
+        "id": "seg-003",
+        "speakerId": "lecturer",
+        "speaker": "Lecturer",
+        "startTime": 317.96,
+        "endTime": 356.88,
+        "text": " Die Gesprächspartner fallen sich gegenseitig ins Wort oder reagieren zu spät. Auch Videoanrufe sind ein Beispiel für Echtzeitübertragung. Wenn Bild und Ton zu spät ankommen, wirkt das Gespräch unnatürlich. Besonders wichtig ist Echtzeitübertragung auch bei Online-Spielen oder industriellen Steuerungssystemen. Dort kann eine zu hohe Verzögerung direkt zu Problemen führen. Diese Verzögerung nennt man Latenz. Eine niedrige Latenz bedeutet, dass Daten sehr schnell beim Ziel ankommen. Eine hohe Latenz bedeutet, dass es eine spürbare Verzögerung gibt."
+        },
+      
+      {
+        "id": "seg-004",
+        "speakerId": "student_1",
+        "speaker": "Student 1",
+        "startTime": 356.94,
+        "endTime": 365,
+        "text": "Ist niedrige Latenz also vor allem bei Telefonaten, Videoanrufen und Online-Spielen wichtig?"
+      },
+     
+  {
+    "id": "seg-005",
+    "speakerId": "lecturer",
+    "speaker": "Lecturer",
+    "startTime": 365.02,
+    "endTime": 398.0,
+    "text": "Ja, genau. Bei solchen Anwendungen ist niedrige Latenz besonders wichtig, weil die Daten fast sofort ankommen müssen. Wenn man dagegen eine Datei herunterlädt, ist es meistens nicht schlimm, wenn einzelne Datenpakete etwas später ankommen. Wichtig ist dann vor allem, dass die Datei am Ende vollständig und korrekt übertragen wird. Bei einem Videoanruf ist die Situation anders. Dort ist es wichtiger, dass die Daten schnell ankommen, auch wenn die Qualität manchmal leicht reduziert wird."
+  },
+  {
+    "id": "seg-006",
+    "speakerId": "lecturer",
+    "speaker": "Lecturer",
+    "startTime": 398.0,
+    "endTime": 431.0,
+    "text": "Kommunikationsnetze müssen also unterschiedliche Anforderungen erfüllen. Manche Anwendungen brauchen eine hohe Geschwindigkeit. Andere Anwendungen brauchen eine besonders niedrige Latenz. Wieder andere Anwendungen brauchen vor allem Stabilität, Sicherheit oder eine hohe Kapazität. Im Mobilfunk gibt es zusätzlich das Konzept des Handovers. Ein Handover bedeutet, dass eine laufende Verbindung von einer Funkstation zur nächsten übergeben wird, ohne dass die Verbindung abbricht."
+  },
+  {
+    "id": "seg-007",
+    "speakerId": "lecturer",
+    "speaker": "Lecturer",
+    "startTime": 431.0,
+    "endTime": 468.0,
+    "text": "Stellen wir uns vor, jemand telefoniert im Auto. Während der Fahrt bewegt sich das Smartphone aus dem Bereich einer Funkstation heraus und kommt in den Bereich einer anderen Funkstation. Damit das Gespräch nicht unterbrochen wird, übernimmt die neue Funkstation automatisch die Verbindung. Genau diesen Vorgang nennt man Handover. Früher war das nicht selbstverständlich. In alten Mobilfunksystemen konnte ein Gespräch abbrechen, wenn man den Bereich einer Funkstation verlassen hat. Moderne Mobilfunknetze lösen dieses Problem automatisch."
+  },
+  {
+  "id": "seg-008",
+  "speakerId": "lecturer",
+  "speaker": "Lecturer",
+  "startTime": 468.0,
+  "endTime": 525.0,
+  "text": "Dadurch kann man sich bewegen und trotzdem telefonieren, Musik streamen oder mobile Daten nutzen. Ein weiteres Grundprinzip ist die Vermittlung von Daten. Früher wurden Telefonverbindungen häufig leitungsvermittelt aufgebaut. Das bedeutet, dass für die Dauer eines Gesprächs eine feste Verbindung zwischen zwei Teilnehmern reserviert wurde. Diese Verbindung blieb während des Gesprächs bestehen. Im Internet funktioniert Kommunikation meistens anders. Dort verwendet man paketvermittelte Kommunikation. Daten werden in kleine Pakete zerlegt. Diese Pakete können durch das Netz geschickt und am Ziel wieder zusammengesetzt werden. Der Vorteil ist, dass die Netzressourcen effizienter genutzt werden können. Nicht jeder Nutzer braucht dauerhaft eine feste Verbindung. Stattdessen teilen sich viele Nutzer die vorhandene Netzkapazität."
+},
+{
+  "id": "seg-009",
+  "speakerId": "lecturer",
+  "speaker": "Lecturer",
+  "startTime": 525.0,
+  "endTime": 583.31,
+  "text": "Zusammenfassend kann man sagen: Kommunikationsnetze ermöglichen den Austausch von Informationen zwischen Geräten. Das Zugangsnetz verbindet den Nutzer mit dem Netz des Anbieters. Das Kernnetz transportiert Daten über größere Strecken. Netze können nach ihrer Reichweite in PAN, LAN, MAN und WAN eingeteilt werden. Echtzeitübertragung ist wichtig, wenn Daten mit sehr geringer Verzögerung übertragen werden müssen. Latenz beschreibt die Verzögerung bei der Datenübertragung. Und Handover sorgt im Mobilfunk dafür, dass Verbindungen auch bei Bewegung stabil bleiben. Damit haben wir einen Überblick über die wichtigsten Grundlagen von Kommunikationsnetzen bekommen. In der nächsten Vorlesung könnten wir uns genauer ansehen, wie Router den Weg eines Datenpakets bestimmen und welche Protokolle bei der Kommunikation im Internet verwendet werden."
+}
+]
+    
+  }
+}
