@@ -91,19 +91,61 @@ a:focus-visible {
 }
 
 .login-page {
-  width: min(100%, 540px);
+  position: relative;
+  width: min(100%, 520px);
+  overflow: hidden;
+  padding: clamp(2rem, 6vw, 3.5rem);
+  border-color: rgb(52 112 95 / 18%);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(52 112 95 / 13%), transparent 34%),
+    #ffffff;
+}
+
+.login-page::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(#34705f, #87b5a5);
+  content: "";
+}
+
+.login-brand-mark {
+  display: grid;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 1.75rem;
+  place-items: center;
+  border-radius: 1rem;
+  color: #ffffff;
+  background: #183f35;
+  box-shadow: 0 12px 24px rgb(24 63 53 / 22%);
+  font-size: 1.25rem;
+  font-weight: 850;
+}
+
+.login-heading h1 {
+  font-size: clamp(2.5rem, 7vw, 4rem);
+}
+
+.login-heading > p:last-child {
+  max-width: 42ch;
+  margin: 1rem 0 0;
+  color: #60716b;
+  line-height: 1.65;
 }
 
 .login-form {
   display: grid;
   gap: 1rem;
-  margin-top: 2rem;
+  margin-top: 2.25rem;
 }
 
 .login-field {
   display: grid;
   gap: 0.5rem;
   color: #20302a;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .secondary-button {
@@ -122,12 +164,48 @@ a:focus-visible {
 
 .login-field input {
   width: 100%;
-  min-height: 3rem;
-  padding: 0.85rem 1rem;
+  min-height: 3.4rem;
+  padding: 0.9rem 1.05rem;
   border: 1px solid #c7d5cf;
-  border-radius: 0.95rem;
+  border-radius: 1rem;
   background: #f8fbf9;
   color: #20302a;
+  font: inherit;
+  font-weight: 500;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.login-field input::placeholder {
+  color: #91a19b;
+}
+
+.login-field input:focus {
+  border-color: #34705f;
+  outline: 0;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgb(52 112 95 / 12%);
+}
+
+.login-form .playback-button {
+  min-height: 3.35rem;
+  margin-top: 0.25rem;
+  font-weight: 750;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.login-form .playback-button:hover {
+  background: #245d4e;
+  box-shadow: 0 12px 24px rgb(24 63 53 / 18%);
+  transform: translateY(-1px);
+}
+
+.login-note {
+  margin: 1.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2ebe7;
+  color: #71817b;
+  font-size: 0.84rem;
+  line-height: 1.55;
 }
 
 .form-error {
@@ -150,38 +228,54 @@ a:focus-visible {
 
 .home-intro {
   display: grid;
-  max-width: 760px;
-  gap: 1.25rem;
-  padding-bottom: 0.5rem;
+  position: relative;
+  max-width: none;
+  gap: 1.5rem;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid rgb(52 112 95 / 14%);
+  border-radius: 1.75rem;
+  background:
+    radial-gradient(circle at 90% 15%, rgb(135 181 165 / 24%), transparent 30%),
+    linear-gradient(135deg, #f8fcfa, #ffffff);
+  box-shadow: 0 18px 44px rgb(24 63 53 / 8%);
 }
 
 .home-greeting {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
 .home-avatar {
   display: grid;
-  width: 3.75rem;
-  height: 3.75rem;
-  flex: 0 0 3.75rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  flex: 0 0 4.5rem;
   place-items: center;
-  border-radius: 50%;
+  border: 4px solid #ffffff;
+  border-radius: 1.4rem;
   color: #ffffff;
-  background: #34705f;
-  font-size: 1.35rem;
+  background: linear-gradient(145deg, #34705f, #183f35);
+  box-shadow: 0 12px 24px rgb(24 63 53 / 20%);
+  font-size: 1.65rem;
   font-weight: 800;
 }
 
 .home-intro .eyebrow {
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.45rem;
 }
 
 .home-intro h1 {
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2rem, 5vw, 3.25rem);
   line-height: 1.05;
   overflow-wrap: anywhere;
+}
+
+.home-greeting-copy > p:last-child {
+  margin: 0.55rem 0 0;
+  color: #6a7a74;
+  font-size: 0.95rem;
 }
 
 .home-intro-copy {
@@ -190,6 +284,26 @@ a:focus-visible {
   color: #52635d;
   font-size: 1.05rem;
   line-height: 1.7;
+}
+
+.home-primary-action {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 1.15rem;
+  border-radius: 999px;
+  color: #ffffff;
+  background: #183f35;
+  box-shadow: 0 10px 22px rgb(24 63 53 / 16%);
+  font-weight: 700;
+  text-decoration: none;
+  transition: gap 160ms ease, transform 160ms ease;
+}
+
+.home-primary-action:hover {
+  gap: 0.9rem;
+  transform: translateY(-1px);
 }
 
 .home-page,

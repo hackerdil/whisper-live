@@ -8,15 +8,19 @@ function Home({ user }) {
           <span className="home-avatar" aria-hidden="true">
             {user?.name?.trim().charAt(0).toUpperCase() || 'U'}
           </span>
-          <div>
+          <div className="home-greeting-copy">
             <p className="eyebrow">Welcome back</p>
-            <h1>Hi, {user?.name || 'there'}</h1>
+            <h1>{user?.name || 'Your workspace'}</h1>
+            <p>Your personal transcription workspace is ready.</p>
           </div>
         </div>
         <p className="home-intro-copy">
-          Everything you need is right here. Start a new transcription, review your
-          results, or open files shared with you.
+          Start a new transcription, continue with your saved results, or explore
+          files shared with you.
         </p>
+        <Link to="/transcribe" className="home-primary-action">
+          Start transcribing <span aria-hidden="true">→</span>
+        </Link>
       </header>
 
       <div className="summary-grid">
