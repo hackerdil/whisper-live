@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import createdTranscription from '../../docs/transcript1.json'
+import { shareTranscription } from '../services/sharingApi.js'
+import {
+  getGeneratedResultAudioFile,
+  getGeneratedResults,
+  normalizeUsername,
+} from '../services/transcriptionResults.js'
 
 const audioAssets = Object.fromEntries(
   Object.entries(
@@ -12,7 +18,7 @@ const audioAssets = Object.fromEntries(
   ).map(([path, url]) => [`docs/audio/${path.split('/').at(-1)}`, url]),
 )
 
-const savedResults = [
+const sampleResults = [
   createdTranscription,
   {
     id: 'result-2',
@@ -94,6 +100,20 @@ const savedResults = [
   },
 ]
 
+const emptyResult = {
+  id: '',
+  title: '',
+  group: '',
+  audioUrl: '',
+  durationSeconds: 0,
+  language: '',
+  createdBy: '',
+  transcription: {
+    speakers: [],
+    segments: [],
+  },
+}
+
 const textFixes = {
   '\u00c3\u0084': '\u00c4',
   '\u00c3\u0096': '\u00d6',
@@ -131,6 +151,10 @@ function getInitialTime(result) {
 }
 
 function getAudioSource(result) {
+  if (result.runtimeAudioUrl) {
+    return result.runtimeAudioUrl
+  }
+
   if (!result.audioUrl) {
     return ''
   }
@@ -160,10 +184,14 @@ function getSpeakerName(segment, speakerNames) {
 }
 
 function getTranscriptText(result, speakerNames) {
+  const includeTimestamps = result.settings?.includeTimestamps !== false
+
   return getSegments(result)
     .map((segment) => {
       const time = `${formatDuration(segment.startTime)}-${formatDuration(segment.endTime)}`
-      return `[${time}] ${getSpeakerName(segment, speakerNames)}: ${cleanText(segment.text)}`
+      const timestamp = includeTimestamps ? `[${time}] ` : ''
+
+      return `${timestamp}${getSpeakerName(segment, speakerNames)}: ${cleanText(segment.text)}`
     })
     .join('\n\n')
 }
@@ -181,26 +209,39 @@ function downloadTranscript(result, speakerNames) {
   URL.revokeObjectURL(url)
 }
 
-function Results() {
+function Results({ user }) {
   const audioRef = useRef(null)
   const [searchParams] = useSearchParams()
-  const [currentTime, setCurrentTime] = useState(getInitialTime(savedResults[0]))
+  const [availableResults] = useState(() => [
+    ...getGeneratedResults(user.name),
+    ...sampleResults.filter(
+      (result) => normalizeUsername(result.createdBy) === normalizeUsername(user.name),
+    ),
+  ])
+  const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
   const [speakerNamesByResult, setSpeakerNamesByResult] = useState(() =>
-    Object.fromEntries(savedResults.map((result) => [result.id, getDefaultSpeakerNames(result)])),
+    Object.fromEntries(
+      availableResults.map((result) => [result.id, getDefaultSpeakerNames(result)]),
+    ),
   )
-  const selectedId = searchParams.get('file') ?? savedResults[0].id
+  const selectedId = searchParams.get('file') ?? availableResults[0]?.id ?? ''
 
   const selectedResult = useMemo(
-    () => savedResults.find((result) => result.id === selectedId) ?? savedResults[0],
-    [selectedId],
+    () =>
+      availableResults.find((result) => result.id === selectedId) ??
+      availableResults[0] ??
+      emptyResult,
+    [availableResults, selectedId],
   )
 
   const segments = getSegments(selectedResult)
   const speakerNames =
     speakerNamesByResult[selectedResult.id] ?? getDefaultSpeakerNames(selectedResult)
   const audioSource = getAudioSource(selectedResult)
+  const includeTimestamps = selectedResult.settings?.includeTimestamps !== false
   const progressPercent = selectedResult.durationSeconds
     ? Math.min((currentTime / selectedResult.durationSeconds) * 100, 100)
     : 0
@@ -293,6 +334,24 @@ function Results() {
     }
   }
 
+  async function handleShareTranscript() {
+    setIsSharing(true)
+    setStatusMessage('')
+
+    try {
+      await shareTranscription({
+        audioFile: getGeneratedResultAudioFile(selectedResult.id),
+        sharedBy: user.name,
+        transcription: selectedResult,
+      })
+      setStatusMessage('Transcription shared successfully.')
+    } catch (error) {
+      setStatusMessage(error.message)
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
   return (
     <section id="main-content" className="results-page">
       <aside className="results-sidebar" aria-label="Saved transcription results">
@@ -308,7 +367,7 @@ function Results() {
         </nav>
 
         <div className="result-list">
-          {savedResults.map((result) => (
+          {availableResults.map((result) => (
             <Link
               className={selectedResult.id === result.id ? 'result-card active' : 'result-card'}
               key={result.id}
@@ -326,7 +385,17 @@ function Results() {
         </div>
       </aside>
 
-      <article className="result-workspace" aria-live="polite">
+      {availableResults.length === 0 ? (
+        <article className="result-workspace empty-results" aria-live="polite">
+          <p className="eyebrow">Your workspace</p>
+          <h2>No transcriptions yet</h2>
+          <p>Create a transcription to see it here. Results from other users stay private.</p>
+          <Link to="/transcribe" className="ghost-button">
+            Create transcription
+          </Link>
+        </article>
+      ) : (
+        <article className="result-workspace" aria-live="polite">
         <header className="result-workspace-header">
           <div>
             <p className="eyebrow">Selected file</p>
@@ -337,6 +406,9 @@ function Results() {
             </p>
           </div>
           <div className="result-actions">
+            <button type="button" disabled={isSharing} onClick={handleShareTranscript}>
+              {isSharing ? 'Sharing…' : 'Share'}
+            </button>
             <button type="button" onClick={handleCopyTranscript}>
               Copy transcript
             </button>
@@ -433,9 +505,12 @@ function Results() {
           {currentTranscript ? (
             <blockquote>
               <strong>
-                {getSpeakerName(currentTranscript, speakerNames)} (
-                {formatDuration(currentTranscript.startTime)}-
-                {formatDuration(currentTranscript.endTime)})
+                {getSpeakerName(currentTranscript, speakerNames)}
+                {includeTimestamps
+                  ? ` (${formatDuration(currentTranscript.startTime)}-${formatDuration(
+                      currentTranscript.endTime,
+                    )})`
+                  : ''}
               </strong>
               <span>{cleanText(currentTranscript.text)}</span>
             </blockquote>
@@ -452,9 +527,11 @@ function Results() {
             >
               <div>
                 <strong>{getSpeakerName(segment, speakerNames)}</strong>
-                <time>
-                  {formatDuration(segment.startTime)}-{formatDuration(segment.endTime)}
-                </time>
+                {includeTimestamps ? (
+                  <time>
+                    {formatDuration(segment.startTime)}-{formatDuration(segment.endTime)}
+                  </time>
+                ) : null}
               </div>
               <p>{cleanText(segment.text)}</p>
             </section>
@@ -462,7 +539,8 @@ function Results() {
         </div>
 
         {statusMessage ? <p className="result-status-message">{statusMessage}</p> : null}
-      </article>
+        </article>
+      )}
     </section>
   )
 }

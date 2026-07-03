@@ -1,0 +1,10 @@
+.git
+.gitignore
+.vite
+dist
+node_modules
+documents
+docs/audio/shared
+docs/shared-transcriptions.json
+*.local
+npm-debug.log*

@@ -51,11 +51,11 @@ function App() {
           />
           <Route
             path="/transcribe"
-            element={user ? <Transcribe /> : <Navigate to="/login" replace />}
+            element={user ? <Transcribe user={user} /> : <Navigate to="/login" replace />}
           />
           <Route
             path="/results"
-            element={user ? <Results /> : <Navigate to="/login" replace />}
+            element={user ? <Results user={user} /> : <Navigate to="/login" replace />}
           />
           <Route
             path="/shared"

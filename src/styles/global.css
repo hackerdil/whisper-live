@@ -713,10 +713,29 @@ h1 {
   font-weight: 750;
 }
 
-.result-actions button:hover {
+.result-actions button:hover:not(:disabled) {
   border-color: #183f35;
   color: #ffffff;
   background: #183f35;
+}
+
+.result-actions button:disabled {
+  color: #8b9b95;
+  background: #eef3f1;
+  cursor: wait;
+}
+
+.empty-results {
+  align-content: start;
+}
+
+.empty-results h2,
+.empty-results p {
+  margin: 0;
+}
+
+.empty-results .ghost-button {
+  justify-self: start;
 }
 
 .speaker-strip {
@@ -1123,10 +1142,35 @@ h1 {
   transition: width 250ms ease;
 }
 
+.run-progress-track.indeterminate span {
+  width: 38%;
+  animation: transcription-progress 1.2s ease-in-out infinite;
+}
+
+@keyframes transcription-progress {
+  from {
+    transform: translateX(-110%);
+  }
+
+  to {
+    transform: translateX(290%);
+  }
+}
+
 .run-status.done {
   border-color: #bfe0d2;
   background: #ecf5f1;
   box-shadow: none;
+}
+
+.run-status.error {
+  border-color: #efc4be;
+  background: #fff4f2;
+  box-shadow: none;
+}
+
+.run-status.error .run-done-title {
+  color: #9d2d20;
 }
 
 .run-done-title {
