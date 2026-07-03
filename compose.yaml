@@ -1,0 +1,73 @@
+name: whisper-notes
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_WHISPERLIVE_URL: http://localhost:8000
+    depends_on:
+      app-backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5173:80"
+    restart: unless-stopped
+
+  app-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      APP_API_HOST: 0.0.0.0
+      APP_API_PORT: 8787
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:8787/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./docs:/app/docs
+    restart: unless-stopped
+
+  whisperlive:
+    image: ghcr.io/collabora/whisperlive-cpu:latest
+    platform: linux/amd64
+    command:
+      - python
+      - run_server.py
+      - --port
+      - "9090"
+      - --rest_port
+      - "8000"
+      - --backend
+      - faster_whisper
+      - --enable_rest
+      - --cors-origins=http://localhost:5173,http://127.0.0.1:5173
+      - --max_clients
+      - "4"
+      - --max_connection_time
+      - "1200"
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/openapi.json')
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+    ports:
+      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - whisperlive-models:/root/.cache/huggingface
+    restart: unless-stopped
+
+volumes:
+  whisperlive-models:

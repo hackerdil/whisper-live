@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import createdTranscription from '../../docs/transcript1.json'
+import { getSharedTranscriptions } from '../services/sharingApi.js'
 
 const audioAssets = Object.fromEntries(
   Object.entries(
@@ -11,7 +12,7 @@ const audioAssets = Object.fromEntries(
   ).map(([path, url]) => [`docs/audio/${path.split('/').at(-1)}`, url]),
 )
 
-const sharedTranscriptions = [
+const sampleSharedTranscriptions = [
   createdTranscription,
   {
     id: '2',
@@ -186,10 +187,12 @@ function formatDuration(totalSeconds) {
 
 function SharedFiles() {
   const audioRef = useRef(null)
+  const [sharedTranscriptions, setSharedTranscriptions] = useState(sampleSharedTranscriptions)
   const [selectedId, setSelectedId] = useState(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [shouldAutoPlay, setShouldAutoPlay] = useState(false)
+  const [loadError, setLoadError] = useState('')
 
   const selectedTranscription = useMemo(
     () => sharedTranscriptions.find((item) => item.id === selectedId),
@@ -206,6 +209,27 @@ function SharedFiles() {
   const progressPercent = selectedTranscription
     ? Math.min((currentTime / selectedTranscription.durationSeconds) * 100, 100)
     : 0
+
+  useEffect(() => {
+    const controller = new AbortController()
+
+    getSharedTranscriptions({ signal: controller.signal })
+      .then((storedTranscriptions) => {
+        const storedIds = new Set(storedTranscriptions.map((item) => String(item.id)))
+        setSharedTranscriptions([
+          ...storedTranscriptions,
+          ...sampleSharedTranscriptions.filter((item) => !storedIds.has(String(item.id))),
+        ])
+        setLoadError('')
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setLoadError('New shared files could not be loaded from the application backend.')
+        }
+      })
+
+    return () => controller.abort()
+  }, [])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -314,6 +338,7 @@ function SharedFiles() {
         <p className="shared-page-intro">
           Review the audios and their transcriptions shared by other students.
         </p>
+        {loadError ? <p className="field-error">{loadError}</p> : null}
 
         <ul className="shared-file-list">
           {sharedTranscriptions.map((transcription) => (

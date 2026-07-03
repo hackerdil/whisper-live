@@ -1,11 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  DEFAULT_WHISPERLIVE_URL,
+  transcribeAudio,
+} from '../services/transcriptionApi.js'
+import {
+  createTranscriptionResult,
+  saveGeneratedResult,
+} from '../services/transcriptionResults.js'
 
 const ENGINES = [
   {
-    id: 'ollama',
-    name: 'Ollama (Local)',
-    tagline: 'Runs on your own machine. Private, offline, no API key.',
+    id: 'whisperlive',
+    name: 'WhisperLive (Local)',
+    tagline: 'Runs on your own machine through the free WhisperLive REST API.',
   },
   {
     id: 'api',
@@ -14,28 +22,25 @@ const ENGINES = [
   },
 ]
 
-const OLLAMA_MODELS = [
-  'whisper',
-  'whisper-large-v3',
-  'whisper-medium',
-  'whisper-small',
-  'whisper-base',
-]
+const WHISPERLIVE_MODELS = ['whisper-1']
 
 const API_PROVIDERS = [
   {
     id: 'openai',
     name: 'OpenAI',
+    baseUrl: 'https://api.openai.com',
     models: ['whisper-1', 'gpt-4o-transcribe', 'gpt-4o-mini-transcribe'],
   },
   {
     id: 'groq',
     name: 'Groq',
+    baseUrl: 'https://api.groq.com/openai',
     models: ['whisper-large-v3', 'whisper-large-v3-turbo', 'distil-whisper-large-v3-en'],
   },
   {
     id: 'custom',
     name: 'Custom endpoint',
+    baseUrl: '',
     models: ['whisper-large-v3', 'whisper-medium', 'whisper-small'],
   },
 ]
@@ -70,11 +75,11 @@ function formatClock(totalSeconds) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
 }
 
-function Transcribe() {
+function Transcribe({ user }) {
   const fileInputRef = useRef(null)
   const mediaRecorderRef = useRef(null)
   const recordTimerRef = useRef(null)
-  const progressTimerRef = useRef(null)
+  const requestControllerRef = useRef(null)
 
   const [sourceMode, setSourceMode] = useState('upload')
   const [audioFile, setAudioFile] = useState(null)
@@ -85,9 +90,9 @@ function Transcribe() {
   const [recordSeconds, setRecordSeconds] = useState(0)
   const [recordError, setRecordError] = useState('')
 
-  const [engine, setEngine] = useState('ollama')
-  const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434')
-  const [ollamaModel, setOllamaModel] = useState(OLLAMA_MODELS[0])
+  const [engine, setEngine] = useState('whisperlive')
+  const [whisperLiveUrl, setWhisperLiveUrl] = useState(DEFAULT_WHISPERLIVE_URL)
+  const [whisperLiveModel, setWhisperLiveModel] = useState(WHISPERLIVE_MODELS[0])
   const [apiProvider, setApiProvider] = useState(API_PROVIDERS[0].id)
   const [apiModel, setApiModel] = useState(API_PROVIDERS[0].models[0])
   const [apiKey, setApiKey] = useState('')
@@ -96,10 +101,10 @@ function Transcribe() {
   const [language, setLanguage] = useState('auto')
   const [title, setTitle] = useState('')
   const [timestamps, setTimestamps] = useState(true)
-  const [diarization, setDiarization] = useState(false)
 
   const [status, setStatus] = useState('idle')
-  const [progress, setProgress] = useState(0)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [completedResultId, setCompletedResultId] = useState('')
 
   const activeProvider = API_PROVIDERS.find((provider) => provider.id === apiProvider)
 
@@ -109,7 +114,7 @@ function Transcribe() {
         URL.revokeObjectURL(audioUrl)
       }
       window.clearInterval(recordTimerRef.current)
-      window.clearInterval(progressTimerRef.current)
+      requestControllerRef.current?.abort()
     }
   }, [audioUrl])
 
@@ -126,7 +131,8 @@ function Transcribe() {
     })
     setAudioFile(file)
     setStatus('idle')
-    setProgress(0)
+    setErrorMessage('')
+    setCompletedResultId('')
 
     if (!title) {
       setTitle(file.name.replace(/\.[^.]+$/, ''))
@@ -152,7 +158,8 @@ function Transcribe() {
     })
     setAudioFile(null)
     setStatus('idle')
-    setProgress(0)
+    setErrorMessage('')
+    setCompletedResultId('')
 
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -221,13 +228,13 @@ function Transcribe() {
   }
 
   const configReady =
-    engine === 'ollama'
-      ? Boolean(ollamaUrl && ollamaModel)
+    engine === 'whisperlive'
+      ? Boolean(whisperLiveUrl && whisperLiveModel)
       : Boolean(apiKey && apiModel && (apiProvider !== 'custom' || apiEndpoint))
 
   const canTranscribe = Boolean(audioFile) && configReady && status !== 'running'
 
-  function handleTranscribe(event) {
+  async function handleTranscribe(event) {
     event.preventDefault()
 
     if (!canTranscribe) {
@@ -235,24 +242,48 @@ function Transcribe() {
     }
 
     setStatus('running')
-    setProgress(0)
-    window.clearInterval(progressTimerRef.current)
+    setErrorMessage('')
+    setCompletedResultId('')
+    requestControllerRef.current?.abort()
 
-    // Frontend-only demo: simulate a transcription run. Wire this to the
-    // backend later by sending audioFile + the selected engine settings.
-    progressTimerRef.current = window.setInterval(() => {
-      setProgress((current) => {
-        const next = current + Math.random() * 12 + 4
+    const controller = new AbortController()
+    requestControllerRef.current = controller
 
-        if (next >= 100) {
-          window.clearInterval(progressTimerRef.current)
-          setStatus('done')
-          return 100
-        }
-
-        return next
+    try {
+      const response = await transcribeAudio({
+        apiKey: engine === 'api' ? apiKey : '',
+        baseUrl:
+          engine === 'whisperlive'
+            ? whisperLiveUrl
+            : apiProvider === 'custom'
+              ? apiEndpoint
+              : activeProvider?.baseUrl,
+        file: audioFile,
+        language,
+        model: engine === 'whisperlive' ? whisperLiveModel : apiModel,
+        signal: controller.signal,
       })
-    }, 320)
+      const result = createTranscriptionResult({
+        createdBy: user?.name,
+        includeTimestamps: timestamps,
+        language,
+        response,
+        title,
+      })
+
+      saveGeneratedResult(result, audioFile)
+      setCompletedResultId(result.id)
+      setStatus('done')
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        setErrorMessage(error.message)
+        setStatus('error')
+      }
+    } finally {
+      if (requestControllerRef.current === controller) {
+        requestControllerRef.current = null
+      }
+    }
   }
 
   return (
@@ -387,12 +418,8 @@ function Transcribe() {
               <span>Include timestamps</span>
             </label>
             <label className="checkbox">
-              <input
-                type="checkbox"
-                checked={diarization}
-                onChange={(event) => setDiarization(event.target.checked)}
-              />
-              <span>Detect speakers (diarization)</span>
+              <input type="checkbox" checked={false} disabled readOnly />
+              <span>Detect speakers (planned: reference clips required)</span>
             </label>
           </div>
         </section>
@@ -409,14 +436,24 @@ function Transcribe() {
         </div>
 
         {status === 'running' ? (
-          <section className="run-status" aria-live="polite">
+          <section className="run-status" aria-busy="true" aria-live="polite">
             <div className="run-status-head">
-              <span>Transcribing with {engine === 'ollama' ? 'Ollama' : activeProvider?.name}…</span>
-              <span>{Math.round(progress)}%</span>
+              <span>
+                Transcribing with{' '}
+                {engine === 'whisperlive' ? 'WhisperLive' : activeProvider?.name}…
+              </span>
+              <span>Please wait</span>
             </div>
-            <div className="run-progress-track">
-              <span style={{ width: `${progress}%` }} />
+            <div className="run-progress-track indeterminate">
+              <span />
             </div>
+          </section>
+        ) : null}
+
+        {status === 'error' ? (
+          <section className="run-status error" aria-live="assertive">
+            <p className="run-done-title">Transcription could not be completed</p>
+            <p className="run-done-text">{errorMessage}</p>
           </section>
         ) : null}
 
@@ -424,10 +461,9 @@ function Transcribe() {
           <section className="run-status done" aria-live="polite">
             <p className="run-done-title">Transcription complete</p>
             <p className="run-done-text">
-              This is a frontend demo, so no transcript was generated. Once the backend is
-              connected, your note will be saved and you can open it from Results.
+              The audio was processed successfully and the generated note is ready in Results.
             </p>
-            <Link to="/results" className="ghost-button">
+            <Link to={`/results?file=${completedResultId}`} className="ghost-button">
               Go to Results
             </Link>
           </section>
@@ -458,21 +494,24 @@ function Transcribe() {
           ))}
         </div>
 
-        {engine === 'ollama' ? (
+        {engine === 'whisperlive' ? (
           <div className="engine-fields">
             <label className="field">
-              <span>Ollama server URL</span>
+              <span>WhisperLive REST URL</span>
               <input
-                type="text"
-                placeholder="http://localhost:11434"
-                value={ollamaUrl}
-                onChange={(event) => setOllamaUrl(event.target.value)}
+                type="url"
+                placeholder="http://localhost:8000"
+                value={whisperLiveUrl}
+                onChange={(event) => setWhisperLiveUrl(event.target.value)}
               />
             </label>
             <label className="field">
-              <span>Model</span>
-              <select value={ollamaModel} onChange={(event) => setOllamaModel(event.target.value)}>
-                {OLLAMA_MODELS.map((model) => (
+              <span>API model</span>
+              <select
+                value={whisperLiveModel}
+                onChange={(event) => setWhisperLiveModel(event.target.value)}
+              >
+                {WHISPERLIVE_MODELS.map((model) => (
                   <option key={model} value={model}>
                     {model}
                   </option>
@@ -480,7 +519,8 @@ function Transcribe() {
               </select>
             </label>
             <p className="engine-note">
-              Make sure Ollama is running locally and the model is pulled.
+              Start WhisperLive with its REST API on port 8000 before transcribing. The server
+              selects the local Whisper model.
             </p>
           </div>
         ) : (
@@ -533,7 +573,8 @@ function Transcribe() {
               />
             </label>
             <p className="engine-note">
-              Your key is only used in the browser to reach the provider.
+              The key is sent directly to the selected provider and is not stored. A secure backend
+              proxy is recommended for production.
             </p>
           </div>
         )}

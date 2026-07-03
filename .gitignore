@@ -1,5 +1,35 @@
-node_modules
-dist
-.vite
-.DS_Store
+# Dependencies and build output
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
 *.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime-generated shared data
+docs/audio/shared/
+docs/shared-transcriptions.json
+docs/shared-transcriptions.json.tmp
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
