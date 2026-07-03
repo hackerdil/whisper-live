@@ -306,7 +306,6 @@ a:focus-visible {
   transform: translateY(-1px);
 }
 
-.home-page,
 .summary-card,
 .link-card {
   background: rgba(255, 255, 255, 0.92);
