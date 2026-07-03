@@ -4,14 +4,13 @@ import { useNavigate } from 'react-router-dom'
 function Login({ onLogin }) {
   const navigate = useNavigate()
   const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
 
   function handleSubmit(event) {
     event.preventDefault()
 
-    if (!username.trim() || !password) {
-      setError('Please enter username and password.')
+    if (!username.trim()) {
+      setError('Please enter your name or username.')
       return
     }
 
@@ -21,47 +20,43 @@ function Login({ onLogin }) {
 
   return (
     <section id="main-content" className="placeholder-page login-page">
-      <p className="eyebrow">Authentication</p>
-      <h1>Login</h1>
-      <p>Use your username and password to continue to the dashboard.</p>
+      <div className="login-brand-mark" aria-hidden="true">
+        W
+      </div>
+      <div className="login-heading">
+        <p className="eyebrow">Welcome to Whisper Notes</p>
+        <h1>Welcome back</h1>
+        <p>Enter your name or username to open your personal workspace.</p>
+      </div>
 
       <form className="login-form" onSubmit={handleSubmit}>
         <label className="login-field" htmlFor="username">
-          Username
+          Name or username
           <input
             id="username"
             type="text"
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            onChange={(event) => {
+              setUsername(event.target.value)
+              setError('')
+            }}
             autoComplete="username"
-          />
-        </label>
-
-        <label className="login-field" htmlFor="password">
-          Password
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            autoComplete="current-password"
+            autoFocus
+            placeholder="e.g. Taylan"
           />
         </label>
 
         {error && <p className="form-error">{error}</p>}
 
         <button type="submit" className="playback-button">
-          Sign in
-        </button>
-
-        <button
-          type="button"
-          className="secondary-button"
-          onClick={() => setError('THWS login is not yet active.')}
-        >
-          THWS Login
+          Open my workspace
         </button>
       </form>
+
+      <p className="login-note">
+        No password needed. Your saved transcriptions stay connected to this username
+        on this device.
+      </p>
     </section>
   )
 }
