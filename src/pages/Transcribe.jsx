@@ -55,6 +55,21 @@ const LANGUAGES = [
 ]
 
 const ACCEPTED_AUDIO = 'audio/*,.mp3,.wav,.m4a,.ogg,.flac,.webm'
+const AUDIO_EXTENSION_PATTERN = /\.(mp3|wav|m4a|ogg|flac|webm)$/i
+const MAX_AUDIO_BYTES = 200 * 1024 * 1024
+const SETTINGS_STORAGE_KEY = 'whisper-transcribe-settings'
+
+function loadStoredSettings() {
+  try {
+    return JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY)) ?? {}
+  } catch {
+    return {}
+  }
+}
+
+function isAcceptedAudioFile(file) {
+  return file.type.startsWith('audio/') || AUDIO_EXTENSION_PATTERN.test(file.name)
+}
 
 function formatBytes(bytes) {
   if (!bytes) {
@@ -69,10 +84,17 @@ function formatBytes(bytes) {
 }
 
 function formatClock(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
+  const wholeSeconds = Math.floor(totalSeconds)
+  const hours = Math.floor(wholeSeconds / 3600)
+  const minutes = Math.floor((wholeSeconds % 3600) / 60)
+  const seconds = wholeSeconds % 60
+  const paddedSeconds = seconds.toString().padStart(2, '0')
 
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${paddedSeconds}`
+  }
+
+  return `${minutes}:${paddedSeconds}`
 }
 
 function Transcribe({ user }) {
@@ -80,49 +102,112 @@ function Transcribe({ user }) {
   const mediaRecorderRef = useRef(null)
   const recordTimerRef = useRef(null)
   const requestControllerRef = useRef(null)
+  const audioUrlRef = useRef('')
+  const disposedRef = useRef(false)
+
+  const [storedSettings] = useState(loadStoredSettings)
+  const initialProvider =
+    API_PROVIDERS.find((provider) => provider.id === storedSettings.apiProvider) ??
+    API_PROVIDERS[0]
 
   const [sourceMode, setSourceMode] = useState('upload')
   const [audioFile, setAudioFile] = useState(null)
   const [audioUrl, setAudioUrl] = useState('')
+  const [audioSeconds, setAudioSeconds] = useState(0)
+  const [sourceError, setSourceError] = useState('')
   const [isDragging, setIsDragging] = useState(false)
 
   const [isRecording, setIsRecording] = useState(false)
   const [recordSeconds, setRecordSeconds] = useState(0)
   const [recordError, setRecordError] = useState('')
 
-  const [engine, setEngine] = useState('whisperlive')
-  const [whisperLiveUrl, setWhisperLiveUrl] = useState(DEFAULT_WHISPERLIVE_URL)
-  const [whisperLiveModel, setWhisperLiveModel] = useState(WHISPERLIVE_MODELS[0])
-  const [apiProvider, setApiProvider] = useState(API_PROVIDERS[0].id)
-  const [apiModel, setApiModel] = useState(API_PROVIDERS[0].models[0])
+  const [engine, setEngine] = useState(storedSettings.engine === 'api' ? 'api' : 'whisperlive')
+  const [whisperLiveUrl, setWhisperLiveUrl] = useState(
+    storedSettings.whisperLiveUrl || DEFAULT_WHISPERLIVE_URL,
+  )
+  const [whisperLiveModel, setWhisperLiveModel] = useState(
+    WHISPERLIVE_MODELS.includes(storedSettings.whisperLiveModel)
+      ? storedSettings.whisperLiveModel
+      : WHISPERLIVE_MODELS[0],
+  )
+  const [apiProvider, setApiProvider] = useState(initialProvider.id)
+  const [apiModel, setApiModel] = useState(
+    initialProvider.models.includes(storedSettings.apiModel)
+      ? storedSettings.apiModel
+      : initialProvider.models[0],
+  )
   const [apiKey, setApiKey] = useState('')
-  const [apiEndpoint, setApiEndpoint] = useState('')
+  const [apiEndpoint, setApiEndpoint] = useState(storedSettings.apiEndpoint ?? '')
 
-  const [language, setLanguage] = useState('auto')
+  const [language, setLanguage] = useState(storedSettings.language ?? 'auto')
   const [title, setTitle] = useState('')
-  const [timestamps, setTimestamps] = useState(true)
+  const [timestamps, setTimestamps] = useState(storedSettings.timestamps ?? true)
 
   const [status, setStatus] = useState('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const [completedResultId, setCompletedResultId] = useState('')
 
   const activeProvider = API_PROVIDERS.find((provider) => provider.id === apiProvider)
+  const busy = status === 'running'
+
+  useEffect(() => {
+    audioUrlRef.current = audioUrl
+  }, [audioUrl])
+
+  useEffect(() => {
+    localStorage.setItem(
+      SETTINGS_STORAGE_KEY,
+      JSON.stringify({
+        engine,
+        whisperLiveUrl,
+        whisperLiveModel,
+        apiProvider,
+        apiModel,
+        apiEndpoint,
+        language,
+        timestamps,
+      }),
+    )
+  }, [engine, whisperLiveUrl, whisperLiveModel, apiProvider, apiModel, apiEndpoint, language, timestamps])
 
   useEffect(() => {
     return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl)
-      }
+      disposedRef.current = true
       window.clearInterval(recordTimerRef.current)
       requestControllerRef.current?.abort()
-    }
-  }, [audioUrl])
 
-  function applyAudioFile(file) {
+      const recorder = mediaRecorderRef.current
+
+      if (recorder && recorder.state !== 'inactive') {
+        recorder.stop()
+      }
+      recorder?.stream.getTracks().forEach((track) => track.stop())
+
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current)
+      }
+    }
+  }, [])
+
+  function applyAudioFile(file, suggestedTitle) {
     if (!file) {
       return
     }
 
+    if (!isAcceptedAudioFile(file)) {
+      setSourceError('This file type is not supported. Use MP3, WAV, M4A, OGG, FLAC or WEBM.')
+      return
+    }
+
+    if (file.size > MAX_AUDIO_BYTES) {
+      setSourceError(
+        `This file is ${formatBytes(file.size)}. The maximum supported size is ${formatBytes(MAX_AUDIO_BYTES)}.`,
+      )
+      return
+    }
+
+    setSourceError('')
+    setAudioSeconds(0)
     setAudioUrl((previousUrl) => {
       if (previousUrl) {
         URL.revokeObjectURL(previousUrl)
@@ -135,7 +220,7 @@ function Transcribe({ user }) {
     setCompletedResultId('')
 
     if (!title) {
-      setTitle(file.name.replace(/\.[^.]+$/, ''))
+      setTitle(suggestedTitle ?? file.name.replace(/\.[^.]+$/, ''))
     }
   }
 
@@ -146,7 +231,27 @@ function Transcribe({ user }) {
   function handleDrop(event) {
     event.preventDefault()
     setIsDragging(false)
-    applyAudioFile(event.dataTransfer.files?.[0] ?? null)
+
+    if (!busy) {
+      applyAudioFile(event.dataTransfer.files?.[0] ?? null)
+    }
+  }
+
+  function openFilePicker(event) {
+    if (busy || event.target.closest('label, input')) {
+      return
+    }
+    fileInputRef.current?.click()
+  }
+
+  function handleDropzoneKeyDown(event) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+
+      if (!busy) {
+        fileInputRef.current?.click()
+      }
+    }
   }
 
   function clearAudio() {
@@ -157,6 +262,8 @@ function Transcribe({ user }) {
       return ''
     })
     setAudioFile(null)
+    setAudioSeconds(0)
+    setSourceError('')
     setStatus('idle')
     setErrorMessage('')
     setCompletedResultId('')
@@ -164,6 +271,11 @@ function Transcribe({ user }) {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+  }
+
+  function startNextTranscription() {
+    clearAudio()
+    setTitle('')
   }
 
   async function startRecording() {
@@ -186,13 +298,24 @@ function Transcribe({ user }) {
       }
 
       recorder.onstop = () => {
+        stream.getTracks().forEach((track) => track.stop())
+
+        if (disposedRef.current) {
+          return
+        }
+
         const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' })
         const recordedFile = new File([blob], `recording-${Date.now()}.webm`, {
           type: blob.type,
         })
+        const recordedAt = new Date().toLocaleString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
 
-        applyAudioFile(recordedFile)
-        stream.getTracks().forEach((track) => track.stop())
+        applyAudioFile(recordedFile, `Recording ${recordedAt}`)
       }
 
       mediaRecorderRef.current = recorder
@@ -232,11 +355,15 @@ function Transcribe({ user }) {
       ? Boolean(whisperLiveUrl && whisperLiveModel)
       : Boolean(apiKey && apiModel && (apiProvider !== 'custom' || apiEndpoint))
 
-  const canTranscribe = Boolean(audioFile) && configReady && status !== 'running'
+  const canTranscribe = Boolean(audioFile) && configReady && !busy
 
-  async function handleTranscribe(event) {
-    event.preventDefault()
+  function cancelTranscription() {
+    requestControllerRef.current?.abort()
+    requestControllerRef.current = null
+    setStatus('idle')
+  }
 
+  async function runTranscription() {
     if (!canTranscribe) {
       return
     }
@@ -286,6 +413,11 @@ function Transcribe({ user }) {
     }
   }
 
+  function handleTranscribe(event) {
+    event.preventDefault()
+    runTranscription()
+  }
+
   return (
     <section id="main-content" className="transcribe-page">
       <form className="transcribe-workspace" onSubmit={handleTranscribe}>
@@ -308,6 +440,7 @@ function Transcribe({ user }) {
                 aria-selected={sourceMode === 'upload'}
                 className={sourceMode === 'upload' ? 'source-tab active' : 'source-tab'}
                 onClick={() => handleSourceModeChange('upload')}
+                disabled={busy}
               >
                 Upload file
               </button>
@@ -317,6 +450,7 @@ function Transcribe({ user }) {
                 aria-selected={sourceMode === 'record'}
                 className={sourceMode === 'record' ? 'source-tab active' : 'source-tab'}
                 onClick={() => handleSourceModeChange('record')}
+                disabled={busy}
               >
                 Record audio
               </button>
@@ -326,6 +460,11 @@ function Transcribe({ user }) {
           {sourceMode === 'upload' ? (
             <div
               className={isDragging ? 'dropzone dragging' : 'dropzone'}
+              role="button"
+              tabIndex={0}
+              aria-label="Add an audio file"
+              onClick={openFilePicker}
+              onKeyDown={handleDropzoneKeyDown}
               onDragOver={(event) => {
                 event.preventDefault()
                 setIsDragging(true)
@@ -340,9 +479,12 @@ function Transcribe({ user }) {
                 type="file"
                 accept={ACCEPTED_AUDIO}
                 onChange={handleFileChange}
+                disabled={busy}
               />
               <p className="dropzone-title">Drag &amp; drop an audio file</p>
-              <p className="dropzone-hint">MP3, WAV, M4A, OGG, FLAC or WEBM</p>
+              <p className="dropzone-hint">
+                MP3, WAV, M4A, OGG, FLAC or WEBM &middot; up to {formatBytes(MAX_AUDIO_BYTES)}
+              </p>
               <label className="ghost-button" htmlFor="audio-file">
                 Browse files
               </label>
@@ -357,6 +499,7 @@ function Transcribe({ user }) {
                 type="button"
                 className={isRecording ? 'record-button stop' : 'record-button'}
                 onClick={isRecording ? stopRecording : startRecording}
+                disabled={busy}
               >
                 {isRecording ? 'Stop recording' : 'Start recording'}
               </button>
@@ -364,14 +507,32 @@ function Transcribe({ user }) {
             </div>
           )}
 
+          {sourceError ? <p className="field-error">{sourceError}</p> : null}
+
           {audioFile ? (
             <div className="audio-summary">
               <div className="audio-summary-info">
                 <strong>{audioFile.name}</strong>
-                <small>{formatBytes(audioFile.size)}</small>
+                <small>
+                  {formatBytes(audioFile.size)}
+                  {audioSeconds > 0 ? ` · ${formatClock(audioSeconds)}` : ''}
+                </small>
               </div>
-              {audioUrl ? <audio controls src={audioUrl} className="audio-preview" /> : null}
-              <button type="button" className="link-button" onClick={clearAudio}>
+              {audioUrl ? (
+                <audio
+                  controls
+                  src={audioUrl}
+                  className="audio-preview"
+                  onLoadedMetadata={(event) => {
+                    const duration = event.target.duration
+
+                    if (Number.isFinite(duration)) {
+                      setAudioSeconds(duration)
+                    }
+                  }}
+                />
+              ) : null}
+              <button type="button" className="link-button" onClick={clearAudio} disabled={busy}>
                 Remove
               </button>
             </div>
@@ -393,12 +554,17 @@ function Transcribe({ user }) {
                 placeholder="e.g. BWL Lecture - Week 5"
                 value={title}
                 onChange={(event) => setTitle(event.target.value)}
+                disabled={busy}
               />
             </label>
 
             <label className="field">
               <span>Language</span>
-              <select value={language} onChange={(event) => setLanguage(event.target.value)}>
+              <select
+                value={language}
+                onChange={(event) => setLanguage(event.target.value)}
+                disabled={busy}
+              >
                 {LANGUAGES.map((item) => (
                   <option key={item.code} value={item.code}>
                     {item.label}
@@ -414,6 +580,7 @@ function Transcribe({ user }) {
                 type="checkbox"
                 checked={timestamps}
                 onChange={(event) => setTimestamps(event.target.checked)}
+                disabled={busy}
               />
               <span>Include timestamps</span>
             </label>
@@ -426,7 +593,7 @@ function Transcribe({ user }) {
 
         <div className="transcribe-actions">
           <button type="submit" className="primary-button" disabled={!canTranscribe}>
-            {status === 'running' ? 'Transcribing…' : 'Start transcription'}
+            {busy ? 'Transcribing…' : 'Start transcription'}
           </button>
           {!audioFile ? (
             <p className="action-hint">Add an audio source to continue.</p>
@@ -447,6 +614,9 @@ function Transcribe({ user }) {
             <div className="run-progress-track indeterminate">
               <span />
             </div>
+            <button type="button" className="ghost-button" onClick={cancelTranscription}>
+              Cancel
+            </button>
           </section>
         ) : null}
 
@@ -454,6 +624,14 @@ function Transcribe({ user }) {
           <section className="run-status error" aria-live="assertive">
             <p className="run-done-title">Transcription could not be completed</p>
             <p className="run-done-text">{errorMessage}</p>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={runTranscription}
+              disabled={!canTranscribe}
+            >
+              Try again
+            </button>
           </section>
         ) : null}
 
@@ -461,11 +639,18 @@ function Transcribe({ user }) {
           <section className="run-status done" aria-live="polite">
             <p className="run-done-title">Transcription complete</p>
             <p className="run-done-text">
-              The audio was processed successfully and the generated note is ready in Results.
+              The audio was processed with{' '}
+              {engine === 'whisperlive' ? 'WhisperLive' : activeProvider?.name} and the generated
+              note is ready in Results.
             </p>
-            <Link to={`/results?file=${completedResultId}`} className="ghost-button">
-              Go to Results
-            </Link>
+            <div className="run-done-actions">
+              <Link to={`/results?file=${completedResultId}`} className="ghost-button">
+                Go to Results
+              </Link>
+              <button type="button" className="link-button" onClick={startNextTranscription}>
+                Transcribe another file
+              </button>
+            </div>
           </section>
         ) : null}
       </form>
@@ -487,6 +672,7 @@ function Transcribe({ user }) {
                 value={item.id}
                 checked={engine === item.id}
                 onChange={() => setEngine(item.id)}
+                disabled={busy}
               />
               <span className="engine-option-name">{item.name}</span>
               <span className="engine-option-tagline">{item.tagline}</span>
@@ -503,6 +689,7 @@ function Transcribe({ user }) {
                 placeholder="http://localhost:8000"
                 value={whisperLiveUrl}
                 onChange={(event) => setWhisperLiveUrl(event.target.value)}
+                disabled={busy}
               />
             </label>
             <label className="field">
@@ -510,6 +697,7 @@ function Transcribe({ user }) {
               <select
                 value={whisperLiveModel}
                 onChange={(event) => setWhisperLiveModel(event.target.value)}
+                disabled={busy}
               >
                 {WHISPERLIVE_MODELS.map((model) => (
                   <option key={model} value={model}>
@@ -530,6 +718,7 @@ function Transcribe({ user }) {
               <select
                 value={apiProvider}
                 onChange={(event) => handleProviderChange(event.target.value)}
+                disabled={busy}
               >
                 {API_PROVIDERS.map((provider) => (
                   <option key={provider.id} value={provider.id}>
@@ -547,13 +736,18 @@ function Transcribe({ user }) {
                   placeholder="https://api.example.com/v1/audio/transcriptions"
                   value={apiEndpoint}
                   onChange={(event) => setApiEndpoint(event.target.value)}
+                  disabled={busy}
                 />
               </label>
             ) : null}
 
             <label className="field">
               <span>Model</span>
-              <select value={apiModel} onChange={(event) => setApiModel(event.target.value)}>
+              <select
+                value={apiModel}
+                onChange={(event) => setApiModel(event.target.value)}
+                disabled={busy}
+              >
                 {activeProvider?.models.map((model) => (
                   <option key={model} value={model}>
                     {model}
@@ -570,6 +764,7 @@ function Transcribe({ user }) {
                 autoComplete="off"
                 value={apiKey}
                 onChange={(event) => setApiKey(event.target.value)}
+                disabled={busy}
               />
             </label>
             <p className="engine-note">

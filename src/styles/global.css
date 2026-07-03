@@ -990,6 +990,7 @@ h1 {
   border-radius: 1.25rem;
   background: #f8fbf9;
   text-align: center;
+  cursor: pointer;
 }
 
 .dropzone.dragging {
@@ -1302,6 +1303,16 @@ h1 {
 
 .run-status.done .ghost-button {
   justify-self: start;
+}
+
+.run-status .ghost-button {
+  justify-self: start;
+}
+
+.run-done-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .transcribe-engine {
